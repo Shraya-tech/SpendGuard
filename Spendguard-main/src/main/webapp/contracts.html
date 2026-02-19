@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contract Compliance • SpendGuard</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    /* Consistent Sidebar & Topbar Layout */
+    body { margin: 0; background: #0f172a; display: flex; flex-direction: column; min-height: 100vh; font-family: sans-serif; }
+    
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    }
+    .topbar-brand { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
+    .topbar-right  { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn {
+      color: #e5e7eb; text-decoration: none; padding: 7px 16px;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      border: 1px solid #1e293b; background: #111827; transition: all 0.2s;
+    }
+    .profile-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #38bdf8; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+
+    .app-shell { display: flex; margin-top: 56px; min-height: calc(100vh - 56px); }
+
+    /* Left Sidebar List */
+    .sidebar {
+      width: 220px; flex-shrink: 0; background: #0b1120;
+      border-right: 1px solid #1e293b; padding: 24px 12px;
+      position: fixed; top: 56px; bottom: 0; left: 0;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; text-decoration: none;
+      color: #94a3b8; font-size: 0.875rem; margin-bottom: 2px;
+    }
+    .nav-item.active { background: rgba(56,189,248,0.1); color: #38bdf8; font-weight: 600; }
+
+    /* Main Content */
+    .main { margin-left: 220px; flex: 1; padding: 32px; color: white; }
+    .module-card {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 14px; padding: 28px; margin-bottom: 24px;
+    }
+
+    /* Action Buttons matched to Dashboard */
+    .action-row { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-upload { background: #38bdf8; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-add { background: #111827; color: #e5e7eb; border: 1px solid #1e293b; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+    /* Compliance Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase; padding-bottom: 12px; }
+    td { padding: 14px 0; border-top: 1px solid #1e293b; font-size: 0.9rem; }
+    .status-violation { color: #ef4444; font-weight: 700; }
+    .status-compliant { color: #10b981; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="topbar-brand">SpendGuard</span>
+    <div class="topbar-right">
+      <a class="topbar-btn" href="myfiles.html">📂 My Files</a>
+      <div class="profile-btn">P</div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <nav class="sidebar">
+      <div style="font-size: 0.7rem; color: #475569; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px;">Menu</div>
+      <a class="nav-item" href="dashboard.html">🏠 Dashboard</a>
+      <a class="nav-item" href="duplicate-payments.html">🔁 Duplicate Payments</a>
+      <a class="nav-item" href="duplicate-subscriptions.html">📋 Duplicate Subscriptions</a>
+      <a class="nav-item active" href="contracts.html">📄 Contract Compliance</a>
+    </nav>
+
+    <main class="main">
+      <h2>Contract Compliance</h2>
+      <p style="color: #64748b;">Compare agreed contract terms against actual billed amounts.</p>
+
+      <div class="module-card">
+        <h3>Verify New Contract</h3>
+        <p style="font-size: 0.85rem; color: #64748b;">Upload a PDF contract to scan for pricing terms and compare with history.</p>
+        
+        <div class="action-row">
+          <button class="btn-upload" onclick="document.getElementById('pdfInput').click()">Upload Contract PDF</button>
+          <button class="btn-add">+ Add Another Contract</button>
+          <input type="file" id="pdfInput" style="display: none;" accept=".pdf">
+        </div>
+      </div>
+
+      <div class="module-card">
+        <h4>Compliance Audit Results</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Vendor</th>
+              <th>Agreed Rate</th>
+              <th>Last Charged</th>
+              <th>Compliance Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Adobe Business</td>
+              <td>$49.99 / mo</td>
+              <td>$54.99</td>
+              <td><span class="status-violation">🚩 PRICE INCREASE DETECTED</span></td>
+            </tr>
+            <tr>
+              <td>AWS Storage</td>
+              <td>$0.023 / GB</td>
+              <td>$0.023</td>
+              <td><span class="status-compliant">✅ COMPLIANT</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

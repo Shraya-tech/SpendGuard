@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up • SpendGuard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f9ff; /* Light Blue Background */
+    }
+    .auth-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      padding: 40px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .auth-card h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .input-group { text-align: left; margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .input-group input {
+      width: 100%; padding: 12px; background: #0b1120; border: 1px solid #1e293b;
+      border-radius: 8px; color: white; outline: none; box-sizing: border-box;
+    }
+    .btn-auth-submit {
+      width: 100%; background: #38bdf8; color: white; border: none;
+      padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;
+    }
+    .login-link { margin-top: 20px; font-size: 0.875rem; color: #64748b; }
+    .login-link a { color: #38bdf8; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div style="color: #38bdf8; font-size: 1.5rem; font-weight: 800; margin-bottom: 10px;">SpendGuard</div>
+    <h2 style="margin-bottom: 30px;">Create an Account</h2>
+    <form action="dashboard.html">
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" placeholder="John Doe" required>
+      </div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="name@company.com" required>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" placeholder="Create a strong password" required>
+      </div>
+      <button type="submit" class="btn-auth-submit">Create an Account</button>
+    </form>
+    <div class="login-link">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
+  </div>
+</body>
+</html>
