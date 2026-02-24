@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile • SpendGuard</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    body { margin: 0; background: #0f172a; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* Top bar */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px; background: #0f172a; border-bottom: 1px solid #1e293b;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    }
+    .topbar-brand { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
+    .topbar-right  { display: flex; align-items: center; gap: 10px; }
+    .topbar-btn {
+      color: #e5e7eb; text-decoration: none; padding: 7px 16px;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      border: 1px solid #1e293b; background: #111827; transition: all 0.2s;
+    }
+    .topbar-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+    .profile-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #38bdf8; color: #fff; font-weight: 700; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+
+    /* App shell */
+    .app-shell { display: flex; margin-top: 56px; min-height: calc(100vh - 56px); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; flex-shrink: 0; background: #0b1120;
+      border-right: 1px solid #1e293b; padding: 24px 12px;
+      position: fixed; top: 56px; bottom: 0; left: 0; overflow-y: auto;
+    }
+    .sidebar-label {
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      color: #475569; padding: 0 10px; margin-bottom: 8px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; text-decoration: none;
+      color: #94a3b8; font-size: 0.875rem; font-weight: 500;
+      transition: all 0.15s ease; margin-bottom: 2px;
+    }
+    .nav-item:hover  { background: #1e293b; color: #e5e7eb; }
+    .nav-item.active { background: rgba(56,189,248,0.1); color: #38bdf8; font-weight: 600; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* Main */
+    .main { margin-left: 220px; flex: 1; padding: 32px; max-width: 700px; }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .page-sub   { color: #64748b; font-size: 0.875rem; margin-bottom: 32px; }
+
+    /* Avatar */
+    .avatar-section {
+      display: flex; align-items: center; gap: 20px; margin-bottom: 32px;
+    }
+    .avatar-circle {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #38bdf8; color: #fff; font-size: 2rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar-info h2 { color: #fff; font-size: 1.2rem; margin-bottom: 4px; }
+    .avatar-info p  { color: #64748b; font-size: 0.85rem; margin: 0; }
+
+    /* Cards */
+    .profile-card {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 14px; padding: 24px; margin-bottom: 20px;
+    }
+    .profile-card h3 {
+      color: #fff; font-size: 0.95rem; font-weight: 700;
+      margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #1e293b;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; color: #94a3b8; font-size: 0.8rem;
+      font-weight: 600; margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%; background: #0b1120; border: 1px solid #1e293b;
+      border-radius: 8px; color: #e5e7eb; padding: 9px 12px;
+      font-size: 0.875rem; box-sizing: border-box; transition: border-color 0.2s;
+    }
+    .form-group input:focus { outline: none; border-color: #38bdf8; }
+    .form-group input:disabled { color: #475569; cursor: not-allowed; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Save button */
+    .btn-save {
+      background: #38bdf8; color: #fff; border: none;
+      padding: 10px 24px; border-radius: 8px; font-size: 0.875rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-save:hover { background: #0ea5e9; }
+
+    /* Danger zone */
+    .danger-zone {
+      background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 14px; padding: 24px; margin-bottom: 20px;
+    }
+    .danger-zone h3 {
+      color: #ef4444; font-size: 0.95rem; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .danger-zone p { color: #64748b; font-size: 0.83rem; margin-bottom: 16px; }
+    .btn-danger {
+      background: transparent; color: #ef4444; border: 1px solid #ef4444;
+      padding: 9px 20px; border-radius: 8px; font-size: 0.875rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+    /* Success toast */
+    .toast {
+      display: none; position: fixed; bottom: 24px; right: 24px;
+      background: #10b981; color: #fff; padding: 12px 20px;
+      border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 999;
+    }
+    .toast.show { display: block; animation: fadeInUp 0.3s ease; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <span class="topbar-brand">SpendGuard</span>
+    <div class="topbar-right">
+      <a class="topbar-btn" href="my-files.html">📂 My Files</a>
+      <div class="profile-btn" id="profileBtn">P</div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-label">Menu</div>
+      <a class="nav-item" href="dashboard.html">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a class="nav-item" href="duplicate-payments.html">
+        <span class="nav-icon">🔁</span> Duplicate Payments
+      </a>
+      <a class="nav-item" href="duplicate-subscriptions.html">
+        <span class="nav-icon">📋</span> Duplicate Subscriptions
+      </a>
+      <a class="nav-item" href="contracts.html">
+        <span class="nav-icon">📄</span> Contract Compliance
+      </a>
+      <div class="sidebar-label" style="margin-top:16px;">Account</div>
+      <a class="nav-item active" href="profile.html">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main">
+      <div class="page-title">Profile</div>
+      <div class="page-sub">Manage your account information and password.</div>
+
+      <!-- Avatar -->
+      <div class="avatar-section">
+        <div class="avatar-circle" id="avatarCircle">P</div>
+        <div class="avatar-info">
+          <h2 id="avatarName">Your Name</h2>
+          <p id="avatarJoined">Member since —</p>
+        </div>
+      </div>
+
+      <!-- Account Info -->
+      <div class="profile-card">
+        <h3>Account Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="fieldUsername" placeholder="Username" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="fieldEmail" placeholder="email@example.com" />
+          </div>
+        </div>
+        <button class="btn-save" id="btnSaveInfo">Save Changes</button>
+      </div>
+
+      <!-- Change Password -->
+      <div class="profile-card">
+        <h3>Change Password</h3>
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" id="fieldCurrentPw" placeholder="Enter current password" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="fieldNewPw" placeholder="New password" />
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="fieldConfirmPw" placeholder="Repeat new password" />
+          </div>
+        </div>
+        <button class="btn-save" id="btnSavePw">Update Password</button>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <p style="margin-bottom:12px;">Logging out will end your current session. You will need to log back in to access your account.</p>
+        <button class="btn-danger" id="btnLogout" style="margin-right:10px;">Log Out</button>
+        <button class="btn-danger" id="btnDeleteAccount" style="background:rgba(239,68,68,0.15);">Delete Account</button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Load user from localStorage
+    const user = localStorage.getItem('spendguard_user') || 'User';
+    const initial = user.charAt(0).toUpperCase();
+
+    document.getElementById('profileBtn').textContent   = initial;
+    document.getElementById('avatarCircle').textContent = initial;
+    document.getElementById('avatarName').textContent   = user;
+    document.getElementById('fieldUsername').value      = user;
+    document.getElementById('avatarJoined').textContent = 'Member since ' + new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    // Toast helper
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Save account info
+    document.getElementById('btnSaveInfo').addEventListener('click', () => {
+      const username = document.getElementById('fieldUsername').value.trim();
+      if (!username) { alert('Username cannot be empty.'); return; }
+      localStorage.setItem('spendguard_user', username);
+      document.getElementById('avatarCircle').textContent = username.charAt(0).toUpperCase();
+      document.getElementById('avatarName').textContent   = username;
+      document.getElementById('profileBtn').textContent   = username.charAt(0).toUpperCase();
+      showToast('✅ Profile updated successfully!');
+    });
+
+    // Change password
+    document.getElementById('btnSavePw').addEventListener('click', () => {
+      const newPw     = document.getElementById('fieldNewPw').value;
+      const confirmPw = document.getElementById('fieldConfirmPw').value;
+      const currentPw = document.getElementById('fieldCurrentPw').value;
+      if (!currentPw) { alert('Please enter your current password.'); return; }
+      if (!newPw)     { alert('Please enter a new password.'); return; }
+      if (newPw !== confirmPw) { alert('New passwords do not match.'); return; }
+      if (newPw.length < 6)   { alert('Password must be at least 6 characters.'); return; }
+      // Will connect to ChangePasswordServlet in backend phase
+      document.getElementById('fieldCurrentPw').value = '';
+      document.getElementById('fieldNewPw').value     = '';
+      document.getElementById('fieldConfirmPw').value = '';
+      showToast('✅ Password updated successfully!');
+    });
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      localStorage.removeItem('spendguard_user');
+      localStorage.removeItem('spendguard_userId');
+      window.location.href = 'login.html';
+    });
+
+    // Delete Account
+    document.getElementById('btnDeleteAccount').addEventListener('click', async () => {
+      const confirm1 = confirm('Are you sure you want to delete your account? This cannot be undone.');
+      if (!confirm1) return;
+      const confirm2 = confirm('This will permanently delete all your data including payments, subscriptions and contracts. Continue?');
+      if (!confirm2) return;
+
+      try {
+        const res = await fetch('http://localhost:8080/api/auth/delete', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.removeItem('spendguard_user');
+          localStorage.removeItem('spendguard_userId');
+          alert('Your account has been deleted.');
+          window.location.href = 'login.html';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Cannot connect to server.');
+      }
+    });
+  </script>
+
+</body>
+</html>

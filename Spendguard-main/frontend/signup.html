@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up • SpendGuard</title>
+  <style>
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #0f172a; }
+    .auth-card { background: #111827; border: 1px solid #1e293b; padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .brand { color: #38bdf8; font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; }
+    .auth-card h2 { margin-top: 0; font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
+    .auth-card p  { color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px; }
+    .input-group { text-align: left; margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .input-group input { width: 100%; padding: 12px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; color: white; outline: none; box-sizing: border-box; font-size: 0.9rem; transition: border-color 0.2s; }
+    .input-group input:focus { border-color: #38bdf8; }
+    .btn-auth-submit { width: 100%; background: #38bdf8; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: background 0.2s; }
+    .btn-auth-submit:hover { background: #0ea5e9; }
+    .error-msg { display: none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; }
+    .login-link { margin-top: 20px; font-size: 0.875rem; color: #64748b; }
+    .login-link a { color: #38bdf8; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="brand">SpendGuard</div>
+    <h2>Create an Account</h2>
+    <p>Start auditing your finances in minutes.</p>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="input-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Choose a username" />
+    </div>
+    <div class="input-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="name@company.com" />
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Create a strong password" />
+    </div>
+    <div class="input-group">
+      <label>Confirm Password</label>
+      <input type="password" id="confirmPassword" placeholder="Repeat your password" />
+    </div>
+    <button class="btn-auth-submit" id="btnSignup">Create an Account</button>
+    <div class="login-link">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
+  </div>
+  <script>
+    document.getElementById('btnSignup').addEventListener('click', async () => {
+      const username        = document.getElementById('username').value.trim();
+      const email           = document.getElementById('email').value.trim();
+      const password        = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const errorMsg        = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+      if (!username || !email || !password) {
+        errorMsg.textContent = 'Please fill in all fields.';
+        errorMsg.style.display = 'block'; return;
+      }
+      if (password.length < 6) {
+        errorMsg.textContent = 'Password must be at least 6 characters.';
+        errorMsg.style.display = 'block'; return;
+      }
+      if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match.';
+        errorMsg.style.display = 'block'; return;
+      }
+      try {
+        const res = await fetch('http://localhost:8080/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('Account created successfully! Please log in.');
+          window.location.href = 'login.html';
+        } else {
+          errorMsg.textContent = data.error || 'Signup failed. Please try again.';
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Cannot connect to server. Make sure Tomcat is running.';
+        errorMsg.style.display = 'block';
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnSignup').click();
+    });
+  </script>
+</body>
+</html>>
