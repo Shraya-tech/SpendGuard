@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contract Compliance • SpendGuard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="stylesheet" href="styles.css"/>
   <style>
     body { margin: 0; background: #0f172a; display: flex; flex-direction: column; min-height: 100vh; font-family: sans-serif; }
@@ -19,14 +20,76 @@
     .nav-item.active { background: rgba(56,189,248,0.1); color: #38bdf8; font-weight: 600; }
     .main { margin-left: 220px; flex: 1; padding: 32px; color: white; }
     .module-card { background: #111827; border: 1px solid #1e293b; border-radius: 14px; padding: 28px; margin-bottom: 20px; }
-    .search-input { width: 100%; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; color: #e5e7eb; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; box-sizing: border-box; }
-    .btn-action { background: #38bdf8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
-    .btn-action:hover { background: #0ea5e9; }
+
+    /* Upload zone */
+    .upload-zone { border: 2px dashed #1e293b; border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #0b1120; }
+    .upload-zone:hover { border-color: #38bdf8; background: rgba(56,189,248,0.04); }
+    .upload-zone h4 { color: #e5e7eb; margin-bottom: 4px; font-size: 1rem; }
+    .upload-zone p { color: #475569; font-size: 0.82rem; margin: 8px 0 0; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* File list */
+    .file-list { margin: 16px 0; display: flex; flex-direction: column; gap: 8px; }
+    .file-item { display: flex; align-items: center; gap: 10px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; color: #e5e7eb; }
+    .file-item span:first-child { color: #10b981; }
+    .file-remove { margin-left: auto; background: none; border: none; color: #475569; cursor: pointer; font-size: 1rem; }
+    .file-remove:hover { color: #ef4444; }
+
+    /* Buttons row */
+    .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+    .btn-primary { background: #38bdf8; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; }
+    .btn-primary:hover { background: #0ea5e9; }
+    .btn-secondary { background: #1e293b; color: #e5e7eb; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; position: relative; }
+    .btn-secondary:hover { background: #334155; }
+
+    /* Add dropdown */
+    .add-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #1e293b; border: 1px solid #334155; border-radius: 10px; min-width: 200px; z-index: 50; overflow: hidden; }
+    .add-menu.open { display: block; }
+    .add-menu-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 0.85rem; color: #e5e7eb; cursor: pointer; transition: background 0.15s; }
+    .add-menu-item:hover { background: #334155; }
+
+    /* Progress */
+    .progress-wrap { display: none; margin: 14px 0; }
+    .progress-bar { height: 8px; background: #1f2937; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: #38bdf8; border-radius: 999px; transition: width 0.4s ease; }
+    .progress-label { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; }
+
+    /* Manual form */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; color: #94a3b8; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; }
+    .form-group input { width: 100%; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; color: #e5e7eb; padding: 10px 12px; font-size: 0.875rem; box-sizing: border-box; transition: border-color 0.2s; }
+    .form-group input:focus { outline: none; border-color: #38bdf8; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Alert */
+    .alert-banner { display: none; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+    .alert-violation { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); }
+    .alert-violation h4 { color: #ef4444; margin: 0 0 6px; }
+    .alert-compliant { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4); }
+    .alert-compliant h4 { color: #10b981; margin: 0 0 6px; }
+    .alert-banner p { color: #94a3b8; margin: 0; font-size: 0.85rem; }
+
+    /* Results */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-box { background: #0b1120; border: 1px solid #1f2937; border-radius: 10px; padding: 16px; text-align: center; }
+    .stat-number { font-size: 1.6rem; font-weight: 700; }
+    .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
     .results-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
     .results-table th { text-align: left; color: #64748b; font-size: 0.78rem; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid #1e293b; }
     .results-table td { padding: 10px 12px; color: #e5e7eb; font-size: 0.875rem; border-bottom: 1px solid #1e293b; }
     .results-table tr:hover td { background: #0b1120; }
     .badge-violation { background: rgba(239,68,68,0.1); color: #ef4444; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-ok { background: rgba(16,185,129,0.1); color: #10b981; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; }
+    .modal h3 { color: #fff; margin-top: 0; margin-bottom: 20px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: #1e293b; color: #94a3b8; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-save { background: #38bdf8; color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -34,7 +97,7 @@
   <div class="topbar">
     <span class="topbar-brand">SpendGuard</span>
     <div class="topbar-right">
-      <a class="topbar-btn" href="my-files.html">📂 My Files</a>
+      <a class="topbar-btn" href="myfiles.html">📂 My Files</a>
       <a href="profile.html" class="profile-btn" id="profileBtn">P</a>
     </div>
   </div>
@@ -46,72 +109,284 @@
       <a class="nav-item" href="duplicate-payments.html">🔁 Duplicate Payments</a>
       <a class="nav-item" href="duplicate-subscriptions.html">📋 Duplicate Subscriptions</a>
       <a class="nav-item active" href="contracts.html">📄 Contract Compliance</a>
-    
       <div style="font-size:0.7rem;color:#475569;letter-spacing:2px;text-transform:uppercase;margin:16px 0 8px;padding-left:10px;">Account</div>
       <a class="nav-item" href="profile.html">👤 Profile</a>
     </nav>
 
     <main class="main">
       <h2>Contract Compliance</h2>
-      <p style="color:#64748b;">Search and display contract compliance violations.</p>
+      <p style="color:#64748b;">Upload a contract to check if payments exceed the agreed amount.</p>
 
+      <!-- Alert Banner -->
+      <div class="alert-banner" id="alertBanner">
+        <h4 id="alertTitle"></h4>
+        <p id="alertText"></p>
+      </div>
+
+      <!-- Upload Card -->
       <div class="module-card">
-        <label style="display:block;margin-bottom:8px;font-weight:600;color:#94a3b8;">Search Vendor Name</label>
-        <input type="text" class="search-input" id="vendorSearch" placeholder="Enter vendor (e.g. Adobe)..." />
-        <button class="btn-action" id="btnSearch">Search History</button>
+        <h3 style="margin-top:0;">Contracts</h3>
+        <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Upload a contract PDF or add one manually. SpendGuard will extract the vendor and agreed amount, then compare against your bank statement.</p>
 
-        <div style="margin-top:30px;border-top:1px solid #1e293b;padding-top:20px;">
-          <h4 style="margin-top:0;">Display Results</h4>
-          <div id="resultsArea">
-            <p style="font-size:0.85rem;color:#64748b;">No contract violations found for this vendor.</p>
+        <!-- File list -->
+        <div class="file-list" id="fileList"></div>
+
+        <!-- Upload zone -->
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfFile').click()">
+          <div class="upload-icon">📄</div>
+          <h4>Drop your contract PDF here</h4>
+          <p>SpendGuard will extract the vendor name and agreed amount</p>
+          <input type="file" id="pdfFile" accept=".pdf" multiple />
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">Reading PDF...</div>
+        </div>
+
+        <!-- Buttons row — same as dashboard -->
+        <div class="btn-row">
+          <button class="btn-primary" id="btnCheck">🔍 Check Compliance</button>
+          <div style="position:relative;">
+            <button class="btn-secondary" id="btnAdd">+ Add ▾</button>
+            <div class="add-menu" id="addMenu">
+              <div class="add-menu-item" id="menuAddPdf">📄 Upload Another Contract</div>
+              <div class="add-menu-item" id="menuAddManual">✏️ Add Contract Manually</div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsSection" style="display:none;">
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-number" id="statLimit" style="color:#38bdf8;">$0</div>
+            <div class="stat-label">Agreed Amount</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" id="statPaid">$0</div>
+            <div class="stat-label">Actually Charged</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" id="statDiff">$0</div>
+            <div class="stat-label">Difference</div>
+          </div>
+        </div>
+        <div class="module-card">
+          <h3 style="margin-top:0;">Compliance Results</h3>
+          <div id="resultsArea"></div>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- Manual Contract Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>Add Contract Manually</h3>
+      <div class="form-group">
+        <label>Vendor Name</label>
+        <input type="text" id="mVendor" placeholder="e.g. Adobe" />
+      </div>
+      <div class="form-group">
+        <label>Agreed Monthly Amount ($)</label>
+        <input type="number" id="mAmount" placeholder="e.g. 500" step="0.01" />
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" id="btnCancel">Cancel</button>
+        <button class="btn-save" id="btnSaveContract">Add Contract</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     const user = localStorage.getItem('spendguard_user');
     if (user) document.getElementById('profileBtn').textContent = user.charAt(0).toUpperCase();
 
-    document.getElementById('btnSearch').addEventListener('click', async () => {
-      const vendor = document.getElementById('vendorSearch').value.trim();
-      const userId = localStorage.getItem('spendguard_userId');
-      const area   = document.getElementById('resultsArea');
+    let contracts = []; // { vendor, limit, source }
 
-      if (!vendor) { alert('Please enter a vendor name.'); return; }
+    // ── Drag & Drop ──────────────────────────────────────────────────────────
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#38bdf8'; });
+    zone.addEventListener('dragleave', () => zone.style.borderColor = '#1e293b');
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.style.borderColor = '#1e293b';
+      [...e.dataTransfer.files].forEach(f => {
+        if (f.type === 'application/pdf') handlePDF(f);
+        else alert('Please upload PDF files only.');
+      });
+    });
+    document.getElementById('pdfFile').addEventListener('change', e => {
+      [...e.target.files].forEach(f => handlePDF(f));
+    });
 
-      area.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">Searching...</p>';
-
+    // ── Read contract PDF ────────────────────────────────────────────────────
+    async function handlePDF(file) {
+      showProgress(10, `Reading "${file.name}"...`);
       try {
-        const res  = await fetch(`http://localhost:8080/api/contracts/violations?userId=${userId}&vendor=${encodeURIComponent(vendor)}`);
-        const data = await res.json();
-
-        if (!data.length) {
-          area.innerHTML = '<p style="font-size:0.85rem;color:#10b981;">✅ No contract violations found for this vendor.</p>';
-          return;
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          fullText += content.items.map(i => i.str).join(' ') + '\n';
+          showProgress(30 + Math.round((p / pdf.numPages) * 60), `Reading page ${p}...`);
         }
+        showProgress(100, 'Done!');
 
-        let html = `<table class="results-table">
-          <thead><tr><th>Vendor</th><th>Budget Limit</th><th>Amount Paid</th><th>Over By</th><th>Status</th></tr></thead><tbody>`;
-        data.forEach(c => {
-          const overBy = (parseFloat(c.amount_paid) - parseFloat(c.budget_limit)).toFixed(2);
-          html += `<tr>
-            <td>${c.vendor_name}</td>
-            <td>$${parseFloat(c.budget_limit).toFixed(2)}</td>
-            <td>$${parseFloat(c.amount_paid).toFixed(2)}</td>
-            <td style="color:#ef4444;">$${overBy}</td>
-            <td><span class="badge-violation">Violation</span></td>
-          </tr>`;
-        });
-        html += '</tbody></table>';
-        area.innerHTML = html;
+        // Extract vendor name and agreed amount from contract text
+        const vendorMatch = fullText.match(/vendor[:\s]+([A-Za-z][A-Za-z0-9\s&.,]{1,40})/i) ||
+                            fullText.match(/(?:with|between|to)[:\s]+([A-Za-z][A-Za-z0-9\s&.,]{1,30})/i) ||
+                            fullText.match(/([A-Za-z][A-Za-z0-9\s]{2,20})\s+(?:Inc|LLC|Corp|Ltd)/i);
+        const amountMatch = fullText.match(/(?:agreed|contract|monthly|amount|limit|not to exceed|maximum)[:\s\$]*(\d{1,6}(?:\.\d{2})?)/i) ||
+                            fullText.match(/\$\s*(\d{1,6}(?:\.\d{2})?)/);
 
+        const vendor = vendorMatch ? vendorMatch[1].trim() : file.name.replace('.pdf', '');
+        const limit  = amountMatch ? parseFloat(amountMatch[1]) : null;
+
+        addContractToList({ vendor, limit, source: file.name });
+        setTimeout(() => document.getElementById('progressWrap').style.display = 'none', 600);
       } catch (err) {
-        area.innerHTML = '<p style="font-size:0.85rem;color:#64748b;">Could not connect to server.</p>';
+        alert('Could not read PDF: ' + err.message);
+        document.getElementById('progressWrap').style.display = 'none';
       }
+    }
+
+    function addContractToList(contract) {
+      contracts.push(contract);
+      const list = document.getElementById('fileList');
+      const item = document.createElement('div');
+      item.className = 'file-item';
+      item.dataset.idx = contracts.length - 1;
+      item.innerHTML = `
+        <span>✅</span>
+        <span><strong>${contract.vendor}</strong>${contract.limit ? ' — $' + contract.limit.toFixed(2) + '/mo' : ' — amount not detected, enter manually'}</span>
+        <button class="file-remove" title="Remove">✕</button>`;
+      item.querySelector('.file-remove').addEventListener('click', () => {
+        contracts.splice(parseInt(item.dataset.idx), 1);
+        item.remove();
+      });
+      list.appendChild(item);
+    }
+
+    function showProgress(pct, label) {
+      document.getElementById('progressWrap').style.display = 'block';
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = label;
+    }
+
+    // ── Add button dropdown ───────────────────────────────────────────────────
+    const addMenu = document.getElementById('addMenu');
+    document.getElementById('btnAdd').addEventListener('click', e => {
+      e.stopPropagation();
+      addMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', () => addMenu.classList.remove('open'));
+    document.getElementById('menuAddPdf').addEventListener('click', () => {
+      addMenu.classList.remove('open');
+      document.getElementById('pdfFile').click();
+    });
+    document.getElementById('menuAddManual').addEventListener('click', () => {
+      addMenu.classList.remove('open');
+      document.getElementById('modalOverlay').classList.add('open');
+    });
+
+    // ── Manual contract modal ─────────────────────────────────────────────────
+    document.getElementById('btnCancel').addEventListener('click', () => {
+      document.getElementById('modalOverlay').classList.remove('open');
+    });
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay'))
+        document.getElementById('modalOverlay').classList.remove('open');
+    });
+    document.getElementById('btnSaveContract').addEventListener('click', () => {
+      const vendor = document.getElementById('mVendor').value.trim();
+      const limit  = parseFloat(document.getElementById('mAmount').value);
+      if (!vendor) { alert('Please enter a vendor name.'); return; }
+      if (isNaN(limit) || limit <= 0) { alert('Please enter a valid amount.'); return; }
+      addContractToList({ vendor, limit, source: 'Manual' });
+      document.getElementById('mVendor').value  = '';
+      document.getElementById('mAmount').value  = '';
+      document.getElementById('modalOverlay').classList.remove('open');
+    });
+
+    // ── Check Compliance ──────────────────────────────────────────────────────
+    document.getElementById('btnCheck').addEventListener('click', () => {
+      if (contracts.length === 0) { alert('Please upload a contract or add one manually first.'); return; }
+
+      const savedData = localStorage.getItem('spendguard_transactions');
+      if (!savedData) {
+        alert('No bank statement found. Please upload your bank statement on the Dashboard first.');
+        return;
+      }
+
+      const transactions = JSON.parse(savedData);
+      let hasViolation = false;
+      let resultsHTML  = '';
+
+      contracts.forEach(contract => {
+        if (!contract.limit) return;
+
+        const vendorLower = contract.vendor.toLowerCase().replace(/\s+/g, '');
+        const vendorPayments = transactions.filter(t =>
+          t.vendor.toLowerCase().replace(/\s+/g, '').includes(vendorLower.substring(0, 5)) ||
+          vendorLower.includes(t.vendor.toLowerCase().replace(/\s+/g, '').substring(0, 5))
+        );
+
+        const totalPaid  = vendorPayments.reduce((s, t) => s + t.amount, 0);
+        const overBy     = totalPaid - contract.limit;
+        const isViolation = totalPaid > contract.limit;
+        if (isViolation) hasViolation = true;
+
+        // Update stats for first contract
+        document.getElementById('statLimit').textContent = '$' + contract.limit.toFixed(2);
+        document.getElementById('statPaid').textContent  = '$' + totalPaid.toFixed(2);
+        document.getElementById('statPaid').style.color  = isViolation ? '#ef4444' : '#10b981';
+        document.getElementById('statDiff').textContent  = isViolation ? '+$' + overBy.toFixed(2) : '✅ OK';
+        document.getElementById('statDiff').style.color  = isViolation ? '#ef4444' : '#10b981';
+
+        resultsHTML += `
+          <div style="margin-bottom:20px;">
+            <h4 style="color:${isViolation ? '#ef4444' : '#10b981'};margin-bottom:8px;">
+              ${isViolation ? '⚠️' : '✅'} ${contract.vendor} — Agreed: $${contract.limit.toFixed(2)} / Charged: $${totalPaid.toFixed(2)}
+              ${isViolation ? `<span style="font-size:0.8rem;"> (Over by $${overBy.toFixed(2)})</span>` : ''}
+            </h4>`;
+
+        if (vendorPayments.length > 0) {
+          resultsHTML += `<table class="results-table">
+            <thead><tr><th>Vendor</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>`;
+          vendorPayments.forEach(t => {
+            resultsHTML += `<tr>
+              <td>${t.vendor}</td>
+              <td>$${t.amount.toFixed(2)}</td>
+              <td>${t.rawDate}</td>
+              <td><span class="${isViolation ? 'badge-violation' : 'badge-ok'}">${isViolation ? '⚠️ Exceeds Limit' : '✅ Compliant'}</span></td>
+            </tr>`;
+          });
+          resultsHTML += `</tbody></table>`;
+        } else {
+          resultsHTML += `<p style="color:#64748b;font-size:0.85rem;">No payments found for "${contract.vendor}" in the bank statement.</p>`;
+        }
+        resultsHTML += `</div>`;
+      });
+
+      // Show main alert
+      const banner = document.getElementById('alertBanner');
+      banner.className = 'alert-banner ' + (hasViolation ? 'alert-violation' : 'alert-compliant');
+      document.getElementById('alertTitle').textContent = hasViolation ? '⚠️ Contract Violations Detected!' : '✅ All Contracts Compliant';
+      document.getElementById('alertText').textContent  = hasViolation
+        ? 'One or more vendors were charged more than the agreed contract amount.'
+        : 'All vendors were charged within their agreed contract amounts.';
+      banner.style.display = 'block';
+
+      document.getElementById('resultsArea').innerHTML = resultsHTML;
+      document.getElementById('resultsSection').style.display = 'block';
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
     });
   </script>
-
 </body>
 </html>
