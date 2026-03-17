@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Duplicate Payments - SpendGuard</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+body{margin:0;background:#0f172a;display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:#0f172a;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.topbar-brand{font-size:1.2rem;font-weight:800;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-btn{color:#e5e7eb;text-decoration:none;padding:7px 16px;border-radius:8px;font-size:.85rem;font-weight:600;border:1px solid #1e293b;background:#111827}
+.profile-btn{width:34px;height:34px;border-radius:50%;background:#38bdf8;color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.app-shell{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
+.sidebar{width:220px;flex-shrink:0;background:#0b1120;border-right:1px solid #1e293b;padding:24px 12px;position:fixed;top:56px;bottom:0;left:0;overflow-y:auto}
+.sidebar-label{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:#475569;padding:0 10px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;text-decoration:none;color:#94a3b8;font-size:.875rem;font-weight:500;margin-bottom:2px}
+.nav-item:hover{background:#1e293b;color:#e5e7eb}
+.nav-item.active{background:rgba(56,189,248,.1);color:#38bdf8;font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.main{margin-left:220px;flex:1;padding:32px}
+.page-title{font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:4px}
+.page-sub{color:#64748b;font-size:.875rem;margin-bottom:28px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;max-width:700px}
+.stat-card{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:20px}
+.stat-label{color:#64748b;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-value{color:#fff;font-size:1.6rem;font-weight:800}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;max-width:900px;align-items:center}
+.search-input{flex:1;background:#111827;border:1px solid #1e293b;border-radius:8px;color:#e5e7eb;padding:10px 14px;font-size:.875rem;outline:none}
+.search-input:focus{border-color:#38bdf8}
+.btn-scan{background:#38bdf8;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer}
+.results-section{max-width:900px}
+.group-card{background:#111827;border:1px solid #1e293b;border-radius:12px;margin-bottom:20px;overflow:hidden}
+.group-header{padding:16px 20px;background:rgba(239,68,68,.08);border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.group-title{color:#ef4444;font-weight:700;font-size:.95rem}
+.group-right{display:flex;align-items:center;gap:12px}
+.group-meta{color:#64748b;font-size:.82rem}
+.btn-resolve{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);padding:5px 14px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+.btn-resolve:hover{background:rgba(16,185,129,.3)}
+table{width:100%;border-collapse:collapse}
+th{background:#0b1120;color:#64748b;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;padding:10px 16px;text-align:left}
+td{padding:12px 16px;color:#e5e7eb;font-size:.875rem;border-top:1px solid #1e293b}
+.badge-dup{background:rgba(239,68,68,.15);color:#ef4444;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-orig{background:rgba(16,185,129,.15);color:#10b981;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.success-msg{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:10px 16px;color:#10b981;font-size:.85rem;margin-bottom:12px;display:none}
+.empty-state{text-align:center;padding:60px 20px;color:#475569}
+.empty-icon{font-size:48px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-brand">SpendGuard</span>
+  <div class="topbar-right">
+    <a class="topbar-btn" href="myfiles.html">📂 My Files</a>
+    <a href="profile.html" class="profile-btn" id="profileBtn">P</a>
+  </div>
+</div>
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="sidebar-label">Menu</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item active" href="duplicate-payments.html"><span class="nav-icon">🔁</span> Duplicate Payments</a>
+    <a class="nav-item" href="duplicate-subscriptions.html"><span class="nav-icon">📋</span> Duplicate Subscriptions</a>
+    <a class="nav-item" href="contracts.html"><span class="nav-icon">📄</span> Contract Compliance</a>
+    <div style="font-size:.7rem;color:#475569;letter-spacing:2px;text-transform:uppercase;margin:16px 0 8px;padding-left:10px">Account</div>
+    <a class="nav-item" href="profile.html">👤 Profile</a>
+  </nav>
+  <main class="main">
+    <div class="page-title">Duplicate Payments</div>
+    <div class="page-sub">Detects the same payment charged more than once — same vendor, same amount, same date.</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Duplicate Groups</div><div class="stat-value" id="statGroups">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total at Risk</div><div class="stat-value" id="statTotal">$0.00</div></div>
+      <div class="stat-card"><div class="stat-label">Transactions Scanned</div><div class="stat-value" id="statScanned">0</div></div>
+    </div>
+    <div class="toolbar">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search by vendor..." oninput="filterResults()"/>
+      <button class="btn-scan" onclick="loadDuplicates()">Scan for Duplicates</button>
+    </div>
+    <div class="success-msg" id="successMsg">Duplicate removed successfully.</div>
+    <div class="results-section" id="resultsSection">
+      <div class="empty-state"><div class="empty-icon">🔁</div><p>Click Scan for Duplicates to begin.</p></div>
+    </div>
+  </main>
+</div>
+<script>
+var userId = localStorage.getItem('spendguard_userId');
+var user = localStorage.getItem('spendguard_user');
+if (user) document.getElementById('profileBtn').textContent = user.charAt(0).toUpperCase();
+var allGroups = [];
+
+function loadDuplicates() {
+  if (!userId) { window.location.href = 'login.html'; return; }
+  document.getElementById('resultsSection').innerHTML = '<div class="empty-state"><p>Scanning...</p></div>';
+  fetch('http://localhost:3000/api/duplicate-payments?userId=' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) { allGroups = data; renderGroups(allGroups); })
+    .catch(function(e) { document.getElementById('resultsSection').innerHTML = '<div class="empty-state"><p>Error: ' + e.message + '</p></div>'; });
+}
+
+function removeDuplicate(vendor, amount, date) {
+  if (!confirm('Remove duplicates for ' + vendor + '? This keeps only 1 record.')) return;
+  fetch('http://localhost:3000/api/remove-duplicate-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: parseInt(userId), vendor: vendor, amount: amount, date: date })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      var msg = document.getElementById('successMsg');
+      msg.style.display = 'block';
+      setTimeout(function() { msg.style.display = 'none'; }, 3000);
+      loadDuplicates();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function renderGroups(groups) {
+  document.getElementById('statGroups').textContent = groups.length;
+  if (groups.length === 0) {
+    document.getElementById('statTotal').textContent = '$0.00';
+    document.getElementById('statScanned').textContent = '0';
+    document.getElementById('resultsSection').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No duplicate payments found!</p></div>';
+    return;
+  }
+  var totalRisk = 0;
+  var scanned = 0;
+  var html = '';
+  for (var i = 0; i < groups.length; i++) {
+    var group = groups[i];
+    var amount = parseFloat(group[0].amount);
+    var vendor = group[0].vendor;
+    var date = group[0].payment_date || 'N/A';
+    totalRisk += amount * (group.length - 1);
+    scanned += group.length;
+    html += '<div class="group-card">';
+    html += '<div class="group-header">';
+    html += '<div class="group-title">⚠️ ' + vendor + ' — $' + amount.toFixed(2) + ' charged ' + group.length + ' times on ' + date + '</div>';
+    html += '<div class="group-right"><div class="group-meta">Overcharge: $' + (amount * (group.length - 1)).toFixed(2) + '</div>';
+    html += '<button class="btn-resolve" onclick="removeDuplicate(\'' + vendor.replace(/'/g, "\\'") + '\',' + amount + ',\'' + date + '\')">✓ Mark Resolved</button>';
+    html += '</div></div>';
+    html += '<table><thead><tr><th>Vendor</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>';
+    for (var j = 0; j < group.length; j++) {
+      var t = group[j];
+      var badge = j === 0 ? '<span class="badge-orig">✅ Original</span>' : '<span class="badge-dup">⚠️ Duplicate</span>';
+      html += '<tr><td>' + t.vendor + '</td><td>$' + parseFloat(t.amount).toFixed(2) + '</td><td>' + (t.payment_date || 'N/A') + '</td><td>' + badge + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+  document.getElementById('statTotal').textContent = '$' + totalRisk.toFixed(2);
+  document.getElementById('statScanned').textContent = scanned;
+  document.getElementById('resultsSection').innerHTML = html;
+}
+
+function filterResults() {
+  var q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) { renderGroups(allGroups); return; }
+  var filtered = allGroups.filter(function(g) { return g[0].vendor.toLowerCase().indexOf(q) !== -1; });
+  renderGroups(filtered);
+}
+
+loadDuplicates();
+</script>
+</body>
+</html>

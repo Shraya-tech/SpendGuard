@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SpendGuard — Smart Spend Auditing</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* NAV */
+nav { padding: 20px 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
+.nav-brand { font-size: 1.3rem; font-weight: 800; color: #fff; }
+.nav-brand span { color: #38bdf8; }
+.nav-links { display: flex; gap: 12px; }
+.btn-login { color: #e5e7eb; text-decoration: none; padding: 8px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; border: 1px solid #1e293b; background: transparent; transition: all 0.2s; }
+.btn-login:hover { border-color: #38bdf8; color: #38bdf8; }
+.btn-signup-nav { color: #fff; text-decoration: none; padding: 8px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; background: #38bdf8; transition: all 0.2s; }
+.btn-signup-nav:hover { background: #0ea5e9; }
+
+/* HERO */
+.hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; }
+.hero-badge { display: inline-block; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 28px; letter-spacing: 1px; text-transform: uppercase; }
+.hero h1 { font-size: 3.2rem; font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 20px; max-width: 700px; }
+.hero h1 span { color: #38bdf8; }
+.hero p { color: #64748b; font-size: 1.1rem; line-height: 1.7; max-width: 520px; margin-bottom: 40px; }
+.hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn-hero-primary { background: #38bdf8; color: #fff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-size: 1rem; font-weight: 700; transition: all 0.2s; }
+.btn-hero-primary:hover { background: #0ea5e9; transform: translateY(-1px); }
+.btn-hero-secondary { background: transparent; color: #e5e7eb; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-size: 1rem; font-weight: 600; border: 1px solid #1e293b; transition: all 0.2s; }
+.btn-hero-secondary:hover { border-color: #38bdf8; color: #38bdf8; }
+
+/* FEATURES */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 60px auto 0; padding: 0 24px; width: 100%; }
+.feature-card { background: #111827; border: 1px solid #1e293b; border-radius: 14px; padding: 24px; text-align: left; }
+.feature-icon { font-size: 28px; margin-bottom: 14px; }
+.feature-title { color: #fff; font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
+.feature-desc { color: #64748b; font-size: 0.82rem; line-height: 1.6; }
+
+/* FOOTER */
+footer { text-align: center; padding: 32px; color: #334155; font-size: 0.8rem; border-top: 1px solid #1e293b; margin-top: 60px; }
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 2rem; }
+  .features { grid-template-columns: 1fr; }
+  nav { padding: 16px 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Spend<span>Guard</span></div>
+  <div class="nav-links">
+    <a href="login.html" class="btn-login">Log In</a>
+    <a href="signup.html" class="btn-signup-nav">Sign Up</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Stop Overpaying.<br/>Start <span>Saving.</span></h1>
+  <p>SpendGuard scans your bank statements to detect duplicate payments, duplicate subscriptions, and contract violations — automatically.</p>
+  <div class="hero-buttons">
+    <a href="signup.html" class="btn-hero-primary">Get Started Free</a>
+    <a href="login.html" class="btn-hero-secondary">Already have an account?</a>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">🔁</div>
+      <div class="feature-title">Duplicate Payments</div>
+      <div class="feature-desc">Instantly detects the same vendor charged more than once on the same date and amount.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Duplicate Subscriptions</div>
+      <div class="feature-desc">Finds recurring charges from the same vendor — catching double subscription accounts.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📄</div>
+      <div class="feature-title">Contract Compliance</div>
+      <div class="feature-desc">Upload your vendor contracts and SpendGuard checks if you were charged above the agreed amount.</div>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 SpendGuard. Built for smarter business finance.</footer>
+
+<script>
+  // If already logged in, redirect to dashboard
+  var userId = localStorage.getItem('spendguard_userId');
+  if (userId) { window.location.href = 'dashboard.html'; }
+</script>
+</body>
+</html>

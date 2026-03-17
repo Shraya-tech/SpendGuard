@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contract Compliance - SpendGuard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+body{margin:0;background:#0f172a;display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:#0f172a;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.topbar-brand{font-size:1.2rem;font-weight:800;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-btn{color:#e5e7eb;text-decoration:none;padding:7px 16px;border-radius:8px;font-size:.85rem;font-weight:600;border:1px solid #1e293b;background:#111827}
+.profile-btn{width:34px;height:34px;border-radius:50%;background:#38bdf8;color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.app-shell{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
+.sidebar{width:220px;flex-shrink:0;background:#0b1120;border-right:1px solid #1e293b;padding:24px 12px;position:fixed;top:56px;bottom:0;left:0;overflow-y:auto}
+.sidebar-label{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:#475569;padding:0 10px;margin-bottom:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;text-decoration:none;color:#94a3b8;font-size:.875rem;font-weight:500;margin-bottom:2px}
+.nav-item:hover{background:#1e293b;color:#e5e7eb}
+.nav-item.active{background:rgba(56,189,248,.1);color:#38bdf8;font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.main{margin-left:220px;flex:1;padding:32px}
+.page-title{font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:4px}
+.page-sub{color:#64748b;font-size:.875rem;margin-bottom:28px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1100px;margin-bottom:28px}
+.card{background:#111827;border:1px solid #1e293b;border-radius:14px;padding:24px}
+.card h3{color:#fff;font-size:1rem;font-weight:700;margin-bottom:6px}
+.card p{color:#64748b;font-size:.82rem;margin-bottom:16px}
+.upload-zone{border:2px dashed #1e293b;border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;background:#0b1120;margin-bottom:16px}
+.upload-zone:hover{border-color:#38bdf8}
+.upload-zone h4{color:#e5e7eb;margin-bottom:4px;font-size:.9rem}
+.upload-zone p{color:#475569;font-size:.8rem;margin:0}
+.upload-zone input{display:none}
+.extracted-box{background:#0b1120;border:1px solid #1e293b;border-radius:8px;padding:14px;margin-bottom:14px;display:none}
+.extracted-box label{display:block;color:#94a3b8;font-size:.78rem;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.extracted-box input{width:100%;background:#111827;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;padding:8px 12px;font-size:.875rem;box-sizing:border-box;outline:none;margin-bottom:10px}
+.extracted-box input:focus{border-color:#38bdf8}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:#475569;font-size:.82rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#1e293b}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;color:#94a3b8;font-size:.82rem;font-weight:600;margin-bottom:6px}
+.form-group input{width:100%;background:#0b1120;border:1px solid #1e293b;border-radius:8px;color:#e5e7eb;padding:10px 12px;font-size:.875rem;box-sizing:border-box;outline:none}
+.form-group input:focus{border-color:#38bdf8}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn-primary{background:#38bdf8;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;width:100%}
+.btn-primary:hover{background:#0ea5e9}
+.btn-check{background:#10b981;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;width:100%;margin-top:12px}
+.btn-check:hover{background:#059669}
+.contract-item{background:#0b1120;border:1px solid #1e293b;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.contract-vendor{color:#e5e7eb;font-weight:600;font-size:.875rem}
+.contract-limit{color:#38bdf8;font-size:.875rem}
+.btn-delete-contract{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer}
+.btn-delete-contract:hover{background:rgba(239,68,68,.25)}
+.info-note{border-radius:8px;padding:10px 14px;color:#94a3b8;font-size:.8rem;margin-bottom:14px;display:none}
+.alert-banner{border-radius:12px;padding:16px 20px;margin-bottom:24px;display:none}
+.alert-violation{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)}
+.alert-compliant{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3)}
+.alert-title{font-weight:700;font-size:1rem;margin-bottom:4px}
+.alert-violation .alert-title{color:#ef4444}
+.alert-compliant .alert-title{color:#10b981}
+.alert-text{color:#94a3b8;font-size:.85rem}
+.result-card{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-bottom:16px;max-width:1100px}
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.result-vendor{font-size:1rem;font-weight:700}
+.result-violation{color:#ef4444}
+.result-ok{color:#10b981}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.result-stat{background:#0b1120;border-radius:8px;padding:12px;text-align:center}
+.result-stat-label{color:#64748b;font-size:.75rem;margin-bottom:4px}
+.result-stat-value{font-size:1.1rem;font-weight:700}
+.btn-resolve{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);padding:5px 14px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+.btn-resolve:hover{background:rgba(16,185,129,.3)}
+.success-msg{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:10px 16px;color:#10b981;font-size:.85rem;margin-bottom:12px;display:none}
+.empty-state{text-align:center;padding:40px 20px;color:#475569;font-size:.875rem}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-brand">SpendGuard</span>
+  <div class="topbar-right">
+    <a class="topbar-btn" href="myfiles.html">📂 My Files</a>
+    <a href="profile.html" class="profile-btn" id="profileBtn">P</a>
+  </div>
+</div>
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="sidebar-label">Menu</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="duplicate-payments.html"><span class="nav-icon">🔁</span> Duplicate Payments</a>
+    <a class="nav-item" href="duplicate-subscriptions.html"><span class="nav-icon">📋</span> Duplicate Subscriptions</a>
+    <a class="nav-item active" href="contracts.html"><span class="nav-icon">📄</span> Contract Compliance</a>
+    <div style="font-size:.7rem;color:#475569;letter-spacing:2px;text-transform:uppercase;margin:16px 0 8px;padding-left:10px">Account</div>
+    <a class="nav-item" href="profile.html">👤 Profile</a>
+  </nav>
+  <main class="main">
+    <div class="page-title">Contract Compliance</div>
+    <div class="page-sub">Upload a contract PDF or enter details manually, then check if your bank statement shows overcharges.</div>
+    <div class="two-col">
+      <div class="card">
+        <h3>Add Contract</h3>
+        <p>Upload a contract PDF to auto-extract details, or enter them manually below.</p>
+        <div class="upload-zone" onclick="document.getElementById('contractPdf').click()">
+          <h4>📄 Upload Contract PDF</h4>
+          <p>Click to select a contract PDF file</p>
+          <input type="file" id="contractPdf" accept=".pdf" onchange="handleContractPdf(this)"/>
+        </div>
+        <div class="info-note" id="extractNote"></div>
+        <div class="extracted-box" id="extractedBox">
+          <label>Vendor Name</label>
+          <input type="text" id="extractedVendor" placeholder="e.g. Amazon"/>
+          <label>Agreed Max Amount Per Month ($)</label>
+          <input type="number" id="extractedAmount" placeholder="0.00" step="0.01"/>
+          <button class="btn-primary" onclick="saveExtractedContract()">💾 Save Contract</button>
+        </div>
+        <div class="divider">or enter manually</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vendor Name</label>
+            <input type="text" id="manualVendor" placeholder="e.g. Netflix"/>
+          </div>
+          <div class="form-group">
+            <label>Max Amount ($/mo)</label>
+            <input type="number" id="manualAmount" placeholder="0.00" step="0.01"/>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="saveManualContract()">💾 Save Contract</button>
+      </div>
+      <div class="card">
+        <h3>📋 Saved Contracts</h3>
+        <p>These vendor contracts will be checked against your bank statement.</p>
+        <div id="contractList"><div class="empty-state">No contracts saved yet.</div></div>
+        <button class="btn-check" onclick="checkCompliance()">🔍 Check Compliance</button>
+      </div>
+    </div>
+    <div class="success-msg" id="successMsg">Contract violation marked as resolved.</div>
+    <div class="alert-banner" id="alertBanner">
+      <div class="alert-title" id="alertTitle"></div>
+      <div class="alert-text" id="alertText"></div>
+    </div>
+    <div id="resultsArea"></div>
+  </main>
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+var user = localStorage.getItem('spendguard_user');
+var userId = localStorage.getItem('spendguard_userId');
+if (user) document.getElementById('profileBtn').textContent = user.charAt(0).toUpperCase();
+
+function handleContractPdf(input) {
+  var file = input.files[0];
+  if (!file) return;
+  file.arrayBuffer().then(function(ab) {
+    return pdfjsLib.getDocument({ data: ab }).promise;
+  }).then(function(pdf) {
+    var pages = [];
+    for (var i = 1; i <= pdf.numPages; i++) {
+      pages.push(pdf.getPage(i));
+    }
+    return Promise.all(pages);
+  }).then(function(pages) {
+    var texts = pages.map(function(page) {
+      return page.getTextContent().then(function(c) {
+        return c.items.map(function(x) { return x.str; }).join(' ');
+      });
+    });
+    return Promise.all(texts);
+  }).then(function(parts) {
+    var text = parts.join(' ').replace(/(\d)\s+(\d)/g, '$1$2').replace(/\s+/g, ' ');
+    var amount = '';
+    var vendor = '';
+    var amountPatterns = [
+      /not\s+exceed\s+\$\s?([\d,]+\.?\d{0,2})/i,
+      /maximum.*?\$\s?([\d,]+\.?\d{0,2})/i,
+      /agreed.*?\$\s?([\d,]+\.?\d{0,2})/i,
+      /payment.*?\$\s?([\d,]+\.?\d{0,2})/i,
+      /\$\s?([\d,]+\.\d{2})\s*(?:per month|\/month|monthly)/i,
+      /\$\s?([\d,]+\.\d{2})/i
+    ];
+    for (var i = 0; i < amountPatterns.length; i++) {
+      var m = text.match(amountPatterns[i]);
+      if (m) { amount = parseFloat(m[1].replace(',','')); break; }
+    }
+    var vendorPatterns = [
+      /and\s+(Amazon|Netflix|Apple Music|Spotify|Google|Microsoft|Adobe|Dropbox|Slack|Zoom|Hulu|Disney|Canva|LinkedIn)[\s,\.]/i,
+      /between\s+[\w\s]+\s+and\s+([A-Z][A-Za-z0-9\s\-&\.]{1,30}?)(?:\s*[,\.\(])/,
+      /vendor[:\s]+([A-Z][A-Za-z0-9\s\-&\.]{1,30}?)(?:\s*[,\.\n])/i
+    ];
+    for (var j = 0; j < vendorPatterns.length; j++) {
+      var mv = text.match(vendorPatterns[j]);
+      if (mv) { vendor = mv[1].trim(); break; }
+    }
+    document.getElementById('extractedVendor').value = vendor;
+    document.getElementById('extractedAmount').value = amount;
+    document.getElementById('extractedBox').style.display = 'block';
+    var note = document.getElementById('extractNote');
+    note.style.display = 'block';
+    if (vendor && amount) {
+      note.style.background = 'rgba(16,185,129,0.07)';
+      note.style.border = '1px solid rgba(16,185,129,0.25)';
+      note.textContent = '✅ Auto-detected vendor and amount. Review and save.';
+    } else {
+      note.style.background = 'rgba(245,158,11,0.07)';
+      note.style.border = '1px solid rgba(245,158,11,0.25)';
+      note.textContent = '⚠️ Could not fully auto-detect. Please fill in the missing fields.';
+    }
+  }).catch(function(e) { alert('Error reading PDF: ' + e.message); });
+}
+
+function saveExtractedContract() {
+  var vendor = document.getElementById('extractedVendor').value.trim();
+  var maxAmount = parseFloat(document.getElementById('extractedAmount').value);
+  doSaveContract(vendor, maxAmount, function() {
+    document.getElementById('extractedBox').style.display = 'none';
+    document.getElementById('extractNote').style.display = 'none';
+    document.getElementById('contractPdf').value = '';
+  });
+}
+
+function saveManualContract() {
+  var vendor = document.getElementById('manualVendor').value.trim();
+  var maxAmount = parseFloat(document.getElementById('manualAmount').value);
+  doSaveContract(vendor, maxAmount, function() {
+    document.getElementById('manualVendor').value = '';
+    document.getElementById('manualAmount').value = '';
+  });
+}
+
+function doSaveContract(vendor, maxAmount, onSuccess) {
+  if (!vendor || !maxAmount) { alert('Please enter both vendor name and max amount.'); return; }
+  if (!userId) { window.location.href = 'login.html'; return; }
+  fetch('http://localhost:3000/api/save-contract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: parseInt(userId), vendor: vendor, maxAmount: maxAmount })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) { if (onSuccess) onSuccess(); loadContracts(); }
+    else { alert('Error: ' + data.error); }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function loadContracts() {
+  if (!userId) return;
+  fetch('http://localhost:3000/api/get-contracts?userId=' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = document.getElementById('contractList');
+      if (!data.length) { list.innerHTML = '<div class="empty-state">No contracts saved yet.</div>'; return; }
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var c = data[i];
+        html += '<div class="contract-item">';
+        html += '<span class="contract-vendor">📄 ' + c.vendor + '</span>';
+        html += '<span class="contract-limit">Max: $' + parseFloat(c.maxAmount).toFixed(2) + '/mo</span>';
+        html += '<button class="btn-delete-contract" onclick="deleteContract(\'' + c.vendor.replace(/'/g, "\\'") + '\')">🗑 Remove</button>';
+        html += '</div>';
+      }
+      list.innerHTML = html;
+    }).catch(function() {});
+}
+
+function deleteContract(vendor) {
+  if (!confirm('Remove contract for ' + vendor + '?')) return;
+  fetch('http://localhost:3000/api/remove-contract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: parseInt(userId), vendor: vendor })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      loadContracts();
+      document.getElementById('resultsArea').innerHTML = '';
+      document.getElementById('alertBanner').style.display = 'none';
+    } else { alert('Error: ' + data.error); }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function resolveViolation(vendor) {
+  if (!confirm('Mark ' + vendor + ' as resolved? This will remove it from the contracts list.')) return;
+  fetch('http://localhost:3000/api/remove-contract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: parseInt(userId), vendor: vendor })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      var msg = document.getElementById('successMsg');
+      msg.style.display = 'block';
+      setTimeout(function() { msg.style.display = 'none'; }, 3000);
+      loadContracts();
+      checkCompliance();
+    } else { alert('Error: ' + data.error); }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function checkCompliance() {
+  if (!userId) { window.location.href = 'login.html'; return; }
+  fetch('http://localhost:3000/api/contract-violations?userId=' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(results) {
+      if (!results.length) { alert('No contracts saved. Please add contracts first.'); return; }
+      var hasViolation = false;
+      for (var i = 0; i < results.length; i++) { if (results[i].isViolation) { hasViolation = true; break; } }
+      var banner = document.getElementById('alertBanner');
+      banner.className = 'alert-banner ' + (hasViolation ? 'alert-violation' : 'alert-compliant');
+      document.getElementById('alertTitle').textContent = hasViolation ? '⚠️ Contract Violations Detected!' : '✅ All Contracts Compliant';
+      document.getElementById('alertText').textContent = hasViolation
+        ? 'One or more vendors were charged more than the agreed contract amount.'
+        : 'All vendors were charged within their agreed contract amounts.';
+      banner.style.display = 'block';
+      var html = '';
+      for (var j = 0; j < results.length; j++) {
+        var r = results[j];
+        var isV = r.isViolation;
+        html += '<div class="result-card">';
+        html += '<div class="result-header">';
+        html += '<div class="result-vendor ' + (isV ? 'result-violation' : 'result-ok') + '">' + (isV ? '⚠️' : '✅') + ' ' + r.vendor + '</div>';
+        if (isV) {
+          html += '<button class="btn-resolve" onclick="resolveViolation(\'' + r.vendor.replace(/'/g, "\\'") + '\')">✓ Mark Resolved</button>';
+        }
+        html += '</div>';
+        html += '<div class="result-grid">';
+        html += '<div class="result-stat"><div class="result-stat-label">Agreed Limit</div><div class="result-stat-value" style="color:#fff">$' + parseFloat(r.maxAmount).toFixed(2) + '</div></div>';
+        html += '<div class="result-stat"><div class="result-stat-label">Actually Charged</div><div class="result-stat-value" style="color:' + (isV ? '#ef4444' : '#10b981') + '">$' + parseFloat(r.actualTotal).toFixed(2) + '</div></div>';
+        html += '<div class="result-stat"><div class="result-stat-label">Difference</div><div class="result-stat-value" style="color:' + (isV ? '#ef4444' : '#10b981') + '">' + (isV ? '+$' + parseFloat(r.overBy).toFixed(2) + ' OVER' : '✅ OK') + '</div></div>';
+        html += '</div></div>';
+      }
+      document.getElementById('resultsArea').innerHTML = html;
+      document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+    })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+loadContracts();
+</script>
+</body>
+</html>
