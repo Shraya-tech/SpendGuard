@@ -19,6 +19,39 @@ const db = mysql.createPool({
   database: 'spendguard_db'
 });
 
+// ── Helpers ──
+function parseDate(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length === 3) return new Date(parts[2], parts[0]-1, parts[1]);
+  return new Date(str);
+}
+
+function daysApart(d1, d2) {
+  return Math.abs((d1 - d2) / (1000 * 60 * 60 * 24));
+}
+// A vendor is a subscription if its name contains any of these keywords
+const SUB_KEYWORDS = [".com", ".net", ".io", ".org", ".co", "subscription", "monthly", "annually", "annual", "weekly", "recurring", "membership", "premium", "plus", "pro"];
+function isSubscriptionVendor(vendor) {
+  var v = vendor.toLowerCase();
+  return SUB_KEYWORDS.some(function(k) { return v.includes(k); });
+}
+
+function isRecurring(dates) {
+  const uniqueDates = [...new Set(dates)].map(d => parseDate(d)).filter(d => d).sort((a,b) => a-b);
+  if (uniqueDates.length < 2) return false;
+  for (let i = 0; i < uniqueDates.length - 1; i++) {
+    const diff = daysApart(uniqueDates[i+1], uniqueDates[i]);
+    if (
+      (diff >= 5   && diff <= 9)   ||  // weekly
+      (diff >= 25  && diff <= 35)  ||  // monthly
+      (diff >= 85  && diff <= 95)  ||  // quarterly
+      (diff >= 355 && diff <= 375)     // annual
+    ) return true;
+  }
+  return false;
+}
+
 // ── Auth ──
 app.post('/api/signup', async (req, res) => {
   const { username, email, password } = req.body;
@@ -75,17 +108,48 @@ app.post('/api/save-transactions', async (req, res) => {
   } catch(e) { res.json({ error: e.message }); }
 });
 
+// ── Build subscription vendor set for a user ──
+// Returns a Set of "vendor|amount" keys that are detected as subscriptions
+async function getSubscriptionKeys(userId) {
+  const [combos] = await db.query(
+    'SELECT vendor, amount FROM payments WHERE user_id = ? GROUP BY vendor, amount HAVING COUNT(*) > 1',
+    [userId]
+  );
+  const subKeys = new Set();
+  for (const c of combos) {
+    // Always a subscription if vendor has .com
+    if (isSubscriptionVendor(c.vendor)) {
+      subKeys.add(c.vendor + '|' + c.amount);
+      continue;
+    }
+    // Otherwise check if dates are recurring
+    const [rows] = await db.query(
+      'SELECT payment_date FROM payments WHERE user_id = ? AND vendor = ? AND amount = ?',
+      [userId, c.vendor, c.amount]
+    );
+    const dates = rows.map(r => r.payment_date);
+    if (isRecurring(dates)) {
+      subKeys.add(c.vendor + '|' + c.amount);
+    }
+  }
+  return subKeys;
+}
+
 // ── Duplicate Payments ──
+// Same vendor + same amount + same date, AND the vendor is NOT a subscription
 app.get('/api/duplicate-payments', async (req, res) => {
   const userId = parseInt(req.query.userId);
   if (!userId) return res.json({ error: 'Missing userId' });
   try {
+    const subKeys = await getSubscriptionKeys(userId);
     const [dupes] = await db.query(
       'SELECT vendor, amount, payment_date FROM payments WHERE user_id = ? GROUP BY vendor, amount, payment_date HAVING COUNT(*) > 1',
       [userId]
     );
     const groups = [];
     for (const d of dupes) {
+      const key = d.vendor + '|' + d.amount;
+      if (subKeys.has(key)) continue; // skip — this is a subscription
       const [rows] = await db.query(
         'SELECT * FROM payments WHERE user_id = ? AND vendor = ? AND amount = ? AND payment_date = ?',
         [userId, d.vendor, d.amount, d.payment_date]
@@ -104,7 +168,6 @@ app.post('/api/remove-duplicate-payment', async (req, res) => {
       'SELECT id FROM payments WHERE user_id = ? AND vendor = ? AND amount = ? AND payment_date = ? ORDER BY id ASC',
       [userId, vendor, amount, date]
     );
-    // Keep first, delete the rest one by one
     for (let i = 1; i < rows.length; i++) {
       await db.query('DELETE FROM payments WHERE id = ?', [rows[i].id]);
     }
@@ -113,21 +176,28 @@ app.post('/api/remove-duplicate-payment', async (req, res) => {
 });
 
 // ── Duplicate Subscriptions ──
+// Same vendor + same amount with recurring date pattern OR .com vendor, appearing more than once
 app.get('/api/duplicate-subscriptions', async (req, res) => {
   const userId = parseInt(req.query.userId);
   if (!userId) return res.json({ error: 'Missing userId' });
   try {
-    const [dupes] = await db.query(
+    const [combos] = await db.query(
       'SELECT vendor, amount FROM payments WHERE user_id = ? GROUP BY vendor, amount HAVING COUNT(*) > 1',
       [userId]
     );
     const groups = [];
-    for (const d of dupes) {
+    for (const c of combos) {
       const [rows] = await db.query(
-        'SELECT * FROM payments WHERE user_id = ? AND vendor = ? AND amount = ? ORDER BY payment_date',
-        [userId, d.vendor, d.amount]
+        'SELECT * FROM payments WHERE user_id = ? AND vendor = ? AND amount = ? ORDER BY payment_date ASC',
+        [userId, c.vendor, c.amount]
       );
-      groups.push(rows);
+      const dates = rows.map(r => r.payment_date);
+      const uniqueDates = [...new Set(dates)];
+
+      // Include if .com vendor OR recurring date pattern
+      if (isSubscriptionVendor(c.vendor) || (uniqueDates.length >= 2 && isRecurring(uniqueDates))) {
+        groups.push(rows);
+      }
     }
     res.json(groups);
   } catch(e) { res.json({ error: e.message }); }
@@ -141,7 +211,6 @@ app.post('/api/remove-duplicate-subscription', async (req, res) => {
       'SELECT id FROM payments WHERE user_id = ? AND vendor = ? AND amount = ? ORDER BY id ASC',
       [userId, vendor, amount]
     );
-    // Keep first, delete the rest one by one
     for (let i = 1; i < rows.length; i++) {
       await db.query('DELETE FROM payments WHERE id = ?', [rows[i].id]);
     }

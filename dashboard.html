@@ -68,7 +68,7 @@
     .btn-cancel:hover { color: #e5e7eb; }
     .btn-save { background: #38bdf8; color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
     .btn-save:hover { background: #0ea5e9; }
-    .status-box { background:#1e293b; color:#e5e7eb; padding:12px; border-radius:8px; margin-top:12px; font-size:0.85rem; display:none; }
+    .status-box { background:#1e293b; color:#e5e7eb; padding:12px; border-radius:8px; margin-top:12px; font-size:0.85rem; display:none; line-height:1.8; }
   </style>
 </head>
 <body>
@@ -91,10 +91,10 @@
     </nav>
     <main class="main">
       <div class="page-title">Dashboard</div>
-      <div class="page-sub">Upload your bank statement to start auditing your finances.</div>
+      <div class="page-sub">Upload one or more bank statements to start auditing. You can upload multiple months at once.</div>
       <div class="upload-card">
         <h3>Upload Bank Statement</h3>
-        <p>Upload your PDF bank statement. SpendGuard will scan it for duplicate payments, subscriptions, and contract issues.</p>
+        <p>Upload your PDF bank statements. SpendGuard will scan for duplicate payments, subscriptions, and contract issues.</p>
         <div class="security-note">
           <span>🔒</span>
           <p><strong>Your data is stored securely.</strong> Transactions are saved to your personal account only.</p>
@@ -102,8 +102,8 @@
         <div class="file-list" id="fileList"></div>
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfFile').click()">
           <div class="upload-icon">🏦</div>
-          <h4>Drop your bank statement here</h4>
-          <p>PDF format · Any bank · Multiple months supported</p>
+          <h4>Drop your bank statements here</h4>
+          <p>PDF format · Any bank · Upload multiple months at once</p>
           <input type="file" id="pdfFile" accept=".pdf" multiple />
         </div>
         <div class="action-buttons">
@@ -156,139 +156,230 @@
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    const user   = localStorage.getItem('spendguard_user');
-    const userId = localStorage.getItem('spendguard_userId');
+    var user   = localStorage.getItem('spendguard_user');
+    var userId = localStorage.getItem('spendguard_userId');
     if (user) document.getElementById('profileBtn').textContent = user.charAt(0).toUpperCase();
 
-    document.getElementById('pdfFile').addEventListener('change', e => {
-      [...e.target.files].forEach(addFileToList);
+    document.getElementById('pdfFile').addEventListener('change', function(e) {
+      Array.from(e.target.files).forEach(function(f) { addFileToList(f); });
     });
 
-    const zone = document.getElementById('uploadZone');
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#38bdf8'; });
-    zone.addEventListener('dragleave', () => zone.style.borderColor = '#1e293b');
-    zone.addEventListener('drop', e => {
+    var zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.style.borderColor = '#38bdf8'; });
+    zone.addEventListener('dragleave', function() { zone.style.borderColor = '#1e293b'; });
+    zone.addEventListener('drop', function(e) {
       e.preventDefault(); zone.style.borderColor = '#1e293b';
-      [...e.dataTransfer.files].forEach(f => f.type === 'application/pdf' ? addFileToList(f) : alert('PDF only'));
+      Array.from(e.dataTransfer.files).forEach(function(f) {
+        if (f.type === 'application/pdf') addFileToList(f); else alert('PDF only');
+      });
     });
 
-    let uploadedFiles = [];
+    var uploadedFiles = [];
     function addFileToList(file) {
       uploadedFiles.push(file);
-      const list = document.getElementById('fileList');
-      const item = document.createElement('div');
+      var list = document.getElementById('fileList');
+      var item = document.createElement('div');
       item.className = 'file-item';
       item.innerHTML = '<span>✅</span><span>' + file.name + '</span><button class="file-remove">✕</button>';
-      item.querySelector('.file-remove').addEventListener('click', () => {
-        uploadedFiles = uploadedFiles.filter(f => f.name !== file.name);
+      item.querySelector('.file-remove').addEventListener('click', function() {
+        uploadedFiles = uploadedFiles.filter(function(f) { return f.name !== file.name; });
         item.remove();
       });
       list.appendChild(item);
     }
 
     function log(msg) {
-      const box = document.getElementById('statusBox');
+      var box = document.getElementById('statusBox');
       box.style.display = 'block';
       box.innerHTML += msg + '<br>';
     }
 
-    // Save file record to localStorage for My Files page
     function recordFileUpload(filename) {
-      const key   = 'spendguard_files_' + userId;
-      const files = JSON.parse(localStorage.getItem(key) || '[]');
-      // avoid duplicates
-      if (!files.find(f => f.name === filename)) {
+      var key   = 'spendguard_files_' + userId;
+      var files = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!files.find(function(f) { return f.name === filename; })) {
         files.push({ name: filename, date: new Date().toLocaleDateString() });
         localStorage.setItem(key, JSON.stringify(files));
       }
     }
 
+    // ── PDF PARSER ──
+    // Handles multiple formats:
+    // Format 1: "Vendor  MM/DD/YYYY  $Amount"  (inline)
+    // Format 2: "MM/DD/YYYY  Vendor  $Amount"  (date first, canvas style)
     function parseTransactions(text) {
-      const rows = [];
-      let t = text
-        .replace(/(\d) (\d)/g, '$1$2').replace(/(\d) (\d)/g, '$1$2')
+      var rows = [];
+
+      // Clean up PDF.js spacing artifacts
+      var t = text
+        .replace(/(\d)\s+(\d)/g, '$1$2')
         .replace(/(\d)\s*\/\s*(\d)/g, '$1/$2')
-        .replace(/\s+-\s+/g, '-').replace(/\s+/g, ' ');
-      const pattern = /([A-Za-z][A-Za-z0-9\s\-\(\)\.&]{1,50}?)\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+\$?([\d,]+\.\d{2})/g;
-      let m;
-      while ((m = pattern.exec(t)) !== null) {
-        const vendor  = m[1].trim().replace(/\s+/g, ' ');
-        const rawDate = m[2];
-        const amount  = parseFloat(m[3].replace(',', ''));
-        if (vendor.length < 2 || amount <= 0 || amount > 99999) continue;
-        if (/vendor|total|balance|name/i.test(vendor)) continue;
-        rows.push({ vendor, amount, rawDate });
+        .replace(/\$\s+(\d)/g, '$$$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Skip header lines
+      var lines = t.split('\n');
+      var fullText = '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        if (/date|vendor|description|amount|account|balance|statement|period|bank/i.test(line) && line.length < 60) continue;
+        fullText += line + ' ';
       }
+
+      // Pattern 1: Date first — MM/DD/YYYY Vendor $Amount
+      var p1 = /(\d{1,2}\/\d{1,2}\/\d{4})\s+([A-Za-z][A-Za-z0-9\s\-&\.]{1,40}?)\s+\$?([\d,]+\.\d{2})/g;
+      var m;
+      while ((m = p1.exec(fullText)) !== null) {
+        var rawDate = m[1];
+        var vendor  = m[2].trim().replace(/\s+/g, ' ');
+        var amount  = parseFloat(m[3].replace(',', ''));
+        if (vendor.length < 2 || amount <= 0 || amount > 99999) continue;
+        if (/total|balance|date|vendor|name/i.test(vendor)) continue;
+        rows.push({ vendor: vendor, amount: amount, rawDate: rawDate });
+      }
+
+      // Pattern 2: Vendor first — Vendor MM/DD/YYYY $Amount
+      if (rows.length === 0) {
+        var p2 = /([A-Za-z][A-Za-z0-9\s\-&\.]{1,40}?)\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+\$?([\d,]+\.\d{2})/g;
+        while ((m = p2.exec(fullText)) !== null) {
+          var vendor2  = m[1].trim().replace(/\s+/g, ' ');
+          var rawDate2 = m[2];
+          var amount2  = parseFloat(m[3].replace(',', ''));
+          if (vendor2.length < 2 || amount2 <= 0 || amount2 > 99999) continue;
+          if (/total|balance|date|vendor|name/i.test(vendor2)) continue;
+          rows.push({ vendor: vendor2, amount: amount2, rawDate: rawDate2 });
+        }
+      }
+
       return rows;
     }
 
-    document.getElementById('btnUpload').addEventListener('click', async () => {
-      const btn = document.getElementById('btnUpload');
+    document.getElementById('btnUpload').addEventListener('click', function() {
+      var btn = document.getElementById('btnUpload');
       document.getElementById('statusBox').innerHTML = '';
       document.getElementById('statusBox').style.display = 'none';
+
       if (uploadedFiles.length === 0) { alert('Please select a PDF first.'); return; }
       if (!userId) { window.location.href = 'login.html'; return; }
 
       btn.textContent = 'Uploading...';
       btn.disabled = true;
 
-      try {
-        let allTransactions = [];
-        for (const file of uploadedFiles) {
-          log('📤 Reading: ' + file.name);
-          const ab  = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-          let fullText = '';
-          for (let p = 1; p <= pdf.numPages; p++) {
-            const page    = await pdf.getPage(p);
-            const content = await page.getTextContent();
-            fullText += content.items.map(i => i.str).join(' ') + '\n';
-          }
-          const transactions = parseTransactions(fullText);
-          log('📊 Found ' + transactions.length + ' transactions in ' + file.name);
-          allTransactions = allTransactions.concat(transactions);
-          recordFileUpload(file.name); // save to My Files
+      var allTransactions = [];
+      var fileIndex = 0;
+
+      function processNext() {
+        if (fileIndex >= uploadedFiles.length) {
+          // All files processed — save to DB
+          log('💾 Saving ' + allTransactions.length + ' transactions to database...');
+          fetch('http://localhost:3000/api/save-transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transactions: allTransactions, userId: parseInt(userId) })
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (!data.success) throw new Error(data.error || 'Save failed');
+            log('✅ Saved ' + data.saved + ' transactions!');
+            setTimeout(function() { window.location.href = 'duplicate-payments.html'; }, 1500);
+          })
+          .catch(function(err) {
+            log('❌ Error: ' + err.message);
+            btn.textContent = 'Upload';
+            btn.disabled = false;
+          });
+          return;
         }
 
-        log('💾 Saving to database...');
-        const res  = await fetch('http://localhost:3000/api/save-transactions', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transactions: allTransactions, userId: parseInt(userId) })
+        var file = uploadedFiles[fileIndex];
+        fileIndex++;
+        log('📤 Reading: ' + file.name);
+
+        file.arrayBuffer().then(function(ab) {
+          return pdfjsLib.getDocument({ data: ab }).promise;
+        }).then(function(pdf) {
+          log('📄 ' + file.name + ' — ' + pdf.numPages + ' page(s)');
+          var pagePromises = [];
+          for (var p = 1; p <= pdf.numPages; p++) {
+            pagePromises.push(pdf.getPage(p));
+          }
+          return Promise.all(pagePromises);
+        }).then(function(pages) {
+          var textPromises = pages.map(function(page) {
+            return page.getTextContent().then(function(content) {
+              // Get items with their positions for better reconstruction
+              var items = content.items;
+              // Sort by Y position (top to bottom), then X (left to right)
+              items.sort(function(a, b) {
+                var yDiff = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+                if (Math.abs(yDiff) > 3) return yDiff;
+                return a.transform[4] - b.transform[4];
+              });
+              // Group items by Y position into lines
+              var lines = [];
+              var currentLine = [];
+              var currentY = null;
+              items.forEach(function(item) {
+                var y = Math.round(item.transform[5]);
+                if (currentY === null) currentY = y;
+                if (Math.abs(y - currentY) > 3) {
+                  if (currentLine.length > 0) lines.push(currentLine.join(' '));
+                  currentLine = [];
+                  currentY = y;
+                }
+                if (item.str.trim()) currentLine.push(item.str.trim());
+              });
+              if (currentLine.length > 0) lines.push(currentLine.join(' '));
+              return lines.join('\n');
+            });
+          });
+          return Promise.all(textPromises);
+        }).then(function(pageTexts) {
+          var fullText = pageTexts.join('\n');
+          var transactions = parseTransactions(fullText);
+          log('📊 Found ' + transactions.length + ' transactions in ' + file.name);
+          allTransactions = allTransactions.concat(transactions);
+          recordFileUpload(file.name);
+          processNext();
+        }).catch(function(err) {
+          log('❌ Error reading ' + file.name + ': ' + err.message);
+          processNext();
         });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Save failed');
-        log('✅ Saved ' + data.saved + ' transactions!');
-        setTimeout(() => { window.location.href = 'duplicate-payments.html'; }, 1500);
-      } catch(err) {
-        log('❌ Error: ' + err.message);
-        btn.textContent = 'Upload';
-        btn.disabled = false;
       }
+
+      processNext();
     });
 
-    const addMenu = document.getElementById('addMenu');
-    document.getElementById('btnAdd').addEventListener('click', e => { e.stopPropagation(); addMenu.classList.toggle('open'); });
-    document.addEventListener('click', () => addMenu.classList.remove('open'));
-    document.getElementById('menuAddPdf').addEventListener('click', () => { addMenu.classList.remove('open'); document.getElementById('pdfFile').click(); });
-    document.getElementById('menuAddManual').addEventListener('click', () => { addMenu.classList.remove('open'); document.getElementById('modalOverlay').classList.add('open'); });
-    document.getElementById('btnCancel').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
-    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); });
+    var addMenu = document.getElementById('addMenu');
+    document.getElementById('btnAdd').addEventListener('click', function(e) { e.stopPropagation(); addMenu.classList.toggle('open'); });
+    document.addEventListener('click', function() { addMenu.classList.remove('open'); });
+    document.getElementById('menuAddPdf').addEventListener('click', function() { addMenu.classList.remove('open'); document.getElementById('pdfFile').click(); });
+    document.getElementById('menuAddManual').addEventListener('click', function() { addMenu.classList.remove('open'); document.getElementById('modalOverlay').classList.add('open'); });
+    document.getElementById('btnCancel').addEventListener('click', function() { document.getElementById('modalOverlay').classList.remove('open'); });
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open');
+    });
 
-    document.getElementById('btnSave').addEventListener('click', async () => {
-      const vendor = document.getElementById('fVendor').value.trim();
-      const amount = parseFloat(document.getElementById('fAmount').value);
-      const date   = document.getElementById('fDate').value;
+    document.getElementById('btnSave').addEventListener('click', function() {
+      var vendor = document.getElementById('fVendor').value.trim();
+      var amount = parseFloat(document.getElementById('fAmount').value);
+      var date   = document.getElementById('fDate').value;
       if (!vendor || !amount || !date) { alert('Please fill in Vendor, Amount, and Date.'); return; }
-      const res  = await fetch('http://localhost:3000/api/save-transactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions: [{ vendor, amount, rawDate: date }], userId: parseInt(userId) })
+      fetch('http://localhost:3000/api/save-transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: [{ vendor: vendor, amount: amount, rawDate: date }], userId: parseInt(userId) })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          alert('Transaction added!');
+          document.getElementById('modalOverlay').classList.remove('open');
+          ['fVendor','fAmount','fDate','fCategory','fNotes'].forEach(function(id) { document.getElementById(id).value = ''; });
+        } else { alert('Error: ' + data.error); }
       });
-      const data = await res.json();
-      if (data.success) {
-        alert('Transaction added!');
-        document.getElementById('modalOverlay').classList.remove('open');
-        ['fVendor','fAmount','fDate','fCategory','fNotes'].forEach(id => document.getElementById(id).value = '');
-      } else { alert('Error: ' + data.error); }
     });
   </script>
 </body>
