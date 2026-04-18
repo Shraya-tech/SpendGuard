@@ -15,7 +15,7 @@ app.get('/', function(req, res) {
 
 const db = mysql.createPool({
   host: 'localhost', user: 'root',
-  password: 'root',
+  password: 'your_password', // change this to your mysql password
   database: 'spendguard_db'
 });
 
